@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// prisma/schema.prisma
+
+model Contractor {
+  id                 Int        @id @default(autoincrement())
+  companyName        String
+  companyNumber      String?
+  registrationDate   DateTime?
+
+  registeredAddress     String?
+  correspondenceAddress String?
+  website               String?
+  email                 String    @unique
+  phone                 String?
+  fax                   String?
+
+  authorisedCapital String?
+  paidUpCapital     String?
+  dayakEquity       Float?
+
+  directors  Director[]
+  licenses   License[]
+  otherRegs  OtherRegistration[]
+
+  contactPersonName        String?
+  contactPersonDesignation String?
+  contactPersonPhone       String?
+
+  status     String    @default("pending")
+  createdAt  DateTime  @default(now())
+}
+
+model Director {
+  id           Int        @id @default(autoincrement())
+  name         String
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  contractorId Int
+}
+
+model License {
+  id           Int        @id @default(autoincrement())
+  type         LicenseType
+  gradeOrClass String?
+  subHeads     String?
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  contractorId Int
+}
+
+model OtherRegistration {
+  id           Int        @id @default(autoincrement())
+  description  String
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  contractorId Int
+}
+
+enum LicenseType {
+  CIDB
+  UPKJ
+  UPK
+  FFO
+}
+
+model Activity {
+  id           Int      @id @default(autoincrement())
+  title        String
+  date         DateTime
+  description  String
+  imageUrl     String?
+  registerUrl  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum ActivityCategory {
+  CAPACITY_BUILDING
+  BUSINESS_TALK
+  OTHER
+}
+
+enum ActivitySource {
+  MANUAL
+  FACEBOOK
+}
+
+model Activity {
+  id           Int              @id @default(autoincrement())
+  title        String
+  date         DateTime
+  description  String
+  imageUrl     String?
+  registerUrl  String?
+
+  // NEW
+  category     ActivityCategory @default(OTHER)
+  source       ActivitySource   @default(MANUAL)
+  fbPostId     String?          @unique
+  published    Boolean          @default(true)
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
