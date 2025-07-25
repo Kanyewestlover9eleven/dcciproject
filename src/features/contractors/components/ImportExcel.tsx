@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import * as XLSX from "xlsx";
 
 export default function ImportExcel() {
   const [file, setFile] = useState<File|null>(null);
@@ -18,7 +17,7 @@ export default function ImportExcel() {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     // assumes header row matches your model keys:
     // name, email, phone, address, category, location, status (optional)
-    const json = utils.sheet_to_json(sheet) as Record<string, any>[];
+    const json = utils.sheet_to_json(sheet) as Record<string, 1>[];
 
     const res = await fetch("/api/contractors/import", {
       method: "POST",

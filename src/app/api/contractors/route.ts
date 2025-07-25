@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       },
       licenses: {
         create: Array.isArray(body.licenses)
-          ? body.licenses.map((l: any) => ({
+          ? body.licenses.map((l: ) => ({
               type:        LicenseType[l.type as keyof typeof LicenseType],
               gradeOrClass: l.gradeOrClass,
               subHeads:     l.subHeads,

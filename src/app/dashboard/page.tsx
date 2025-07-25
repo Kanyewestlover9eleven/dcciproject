@@ -26,20 +26,20 @@ export default function DashboardHome() {
     queryKey: ["total"],
     queryFn: () => fetch("/api/contractors/count").then((r) => r.json()),
   });
-  const { data: pendingData } = useQuery<any[]>({
+  const { data: pendingData } = useQuery<[]>({
     queryKey: ["pending"],
     queryFn: () => fetch("/api/contractors/pending").then((r) => r.json()),
   });
-  const { data: locData } = useQuery<any[]>({
+  const { data: locData } = useQuery<[]>({
     queryKey: ["by-location"],
     queryFn: () => fetch("/api/contractors/by-location").then((r) => r.json()),
   });
-  const { data: licData } = useQuery<any[]>({
+  const { data: licData } = useQuery<[]>({
     queryKey: ["licenses"],
     queryFn: () =>
       fetch("/api/contractors/licenses-by-type").then((r) => r.json()),
   });
-  const { data: trendData } = useQuery<any[]>({
+  const { data: trendData } = useQuery<[]>({
     queryKey: ["trend"],
     queryFn: () =>
       fetch(

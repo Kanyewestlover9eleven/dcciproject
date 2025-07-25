@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const published = searchParams.get("published");
-  const category  = searchParams.get("category") as any;
+  const category  = searchParams.get("category");
 
   const where: any = {};
   if (published !== null) where.published = published === "true";

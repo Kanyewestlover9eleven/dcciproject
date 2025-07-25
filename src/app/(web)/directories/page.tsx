@@ -137,7 +137,6 @@ export default function DirectoriesPage() {
                 <select
                   className="px-2 py-1 border rounded"
                   value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as any)}
                 >
                   <option value="name">Name</option>
                   <option value="companyName">Company</option>

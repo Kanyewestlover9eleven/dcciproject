@@ -483,7 +483,6 @@ export default function ContactPage() {
                       <input
                         name={`licenses.${key}`}
                         type="checkbox"
-                        checked={(reg.licenses as any)[key]}
                         onChange={handleRegChange}
                         className="mr-2"
                       />
@@ -494,14 +493,12 @@ export default function ContactPage() {
                         <input
                           name={`licenses.${key}Grade`}
                           placeholder="Grade/Class"
-                          value={(reg.licenses as any)[`${key}Grade`]}
                           onChange={handleRegChange}
                           className="border rounded px-2 py-1 col-span-1"
                         />
                         <input
                           name={`licenses.${key}SubHeads`}
                           placeholder="Sub-Heads"
-                          value={(reg.licenses as any)[`${key}SubHeads`]}
                           onChange={handleRegChange}
                           className="border rounded px-2 py-1 col-span-1"
                         />
