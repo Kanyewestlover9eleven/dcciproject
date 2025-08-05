@@ -1,44 +1,41 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity } from "@/features/activities/types";
-import { useCreateActivity } from "@/features/activities/hooks/useCreateActivity";
+import type { ActivityCreateInput } from "../types";
+import { useCreateActivity } from "../hooks/useCreateActivity";
 
 type FbPost = {
   id: string;
   message?: string;
+  name?: string;
   created_time: string;
+  start_time?: string;
   full_picture?: string;
   permalink_url: string;
-  name?: string;
-  start_time?: string;
 };
 
-type Props = {
-  onClose: () => void;
-};
+type Props = { onClose: () => void };
 
 const CATEGORIES = [
   { value: "CAPACITY_BUILDING", label: "Capacity Building Programs" },
-  { value: "BUSINESS_TALK", label: "Business Talk Series" },
+  { value: "BUSINESS_TALK",     label: "Business Talk Series"       },
 ];
 
 export default function FbImportModal({ onClose }: Props) {
-  // Adjust this if your API returns { data: [...] }
+  const qc     = useQueryClient();
+  const create = useCreateActivity();
+
   const { data: posts = [], isLoading, error } = useQuery<FbPost[]>({
     queryKey: ["fbPosts"],
     queryFn: async () => {
-      const r = await fetch("/api/facebook/posts");
-      if (!r.ok) throw new Error("FB fetch failed");
-      const j = await r.json();
-      // if your route returns { data: [...] }
-      return Array.isArray(j) ? j : j.data;
+      const res = await fetch("/api/facebook/posts");
+      if (!res.ok) throw new Error("Failed to fetch Facebook posts");
+      const json = await res.json();
+      return Array.isArray(json) ? json : json.data;
     },
   });
-
-  const create = useCreateActivity();
-  const qc = useQueryClient();
 
   const [selected, setSelected] = useState<
     Record<string, { checked: boolean; category: string }>
@@ -51,51 +48,62 @@ export default function FbImportModal({ onClose }: Props) {
     }));
 
   const setCat = (id: string, category: string) =>
-    setSelected((s) => ({ ...s, [id]: { checked: true, category } }));
+    setSelected((s) => ({
+      ...s,
+      [id]: { checked: true, category },
+    }));
 
   const importSelected = () => {
     const toImport = posts.filter((p) => selected[p.id]?.checked);
 
+    if (toImport.length === 0) {
+      onClose();
+      return;
+    }
+
     toImport.forEach((p, idx) => {
-      create.mutate(
-        {
-          title:
-            (p.name || p.message?.split("\n")[0] || "Facebook Post").slice(
-              0,
-              100
-            ),
-          description: p.message || "",
-          date: p.start_time || p.created_time,
-          imageUrl: p.full_picture,
-          registerUrl: p.permalink_url,
-          source: "FACEBOOK",
-          fbPostId: p.id,
-          fbPermalink: p.permalink_url,
-          category: selected[p.id]?.category as Activity["category"],
-        } as Partial<Activity>,
-        {
-          onSuccess: () => {
-            // Last one -> close & refetch
-            if (idx === toImport.length - 1) {
-              qc.invalidateQueries({ queryKey: ["activities"] });
-              onClose();
-            }
-          },
-        }
-      );
+      const title       = (p.name || p.message?.split("\n")[0] || "Facebook Post").slice(0, 100);
+      const description = p.message || "";
+      const dateStr     = p.start_time || p.created_time;
+      const dateIso     = new Date(dateStr).toISOString();
+      const category    = selected[p.id]?.category;
+
+      const payload: ActivityCreateInput = {
+        title,
+        description,
+        date: dateIso,
+        source: "FACEBOOK",
+        fbPostId: p.id,
+        imageUrl: p.full_picture || undefined,
+        registerUrl: p.permalink_url || undefined,
+        category: category || undefined,
+        // published left undefined to use Prisma default = true
+      };
+
+      create.mutate(payload, {
+        onSuccess: () => {
+          if (idx === toImport.length - 1) {
+            qc.invalidateQueries({ queryKey: ["activities"] });
+            onClose();
+          }
+        },
+        onError: () => {
+          if (idx === toImport.length - 1) {
+            qc.invalidateQueries({ queryKey: ["activities"] });
+            onClose();
+          }
+        },
+      });
     });
-
-    if (toImport.length === 0) onClose();
   };
-
-  if (!posts && !isLoading && !error) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="relative bg-[#003554] text-white p-6 rounded-2xl w-11/12 max-w-3xl max-h-[90vh] overflow-auto">
         <button
+          aria-label="Close"
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-200 hover:text-white"
+          className="absolute top-2 right-2 text-gray-300 hover:text-white"
         >
           ✕
         </button>
@@ -103,13 +111,14 @@ export default function FbImportModal({ onClose }: Props) {
         <h2 className="text-xl font-semibold mb-4">Import from Facebook</h2>
 
         {isLoading && <p>Loading posts…</p>}
-        {error && <p className="text-red-400">Unable to load posts.</p>}
+        {error     && <p className="text-red-400">Unable to load posts.</p>}
 
         {!isLoading && !error && (
           <ul className="space-y-4">
             {posts.map((p) => {
-              const short = p.message?.slice(0, 160) || "(no message)";
-              const sel = selected[p.id];
+              const sel   = selected[p.id] || { checked: false, category: "" };
+              const short = p.message?.slice(0, 160) ?? "(no message)";
+
               return (
                 <li
                   key={p.id}
@@ -118,28 +127,26 @@ export default function FbImportModal({ onClose }: Props) {
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
-                      checked={!!sel?.checked}
+                      checked={sel.checked}
                       onChange={() => toggle(p.id)}
                       className="mt-1"
                     />
                     <div className="flex-1">
                       <p className="font-semibold">
-                        {(p.name ||
-                          p.message?.split("\n")[0] ||
-                          "Facebook Post"
-                        ).slice(0, 100)}
+                        {(p.name || p.message?.split("\n")[0] || "Facebook Post").slice(0, 100)}
                       </p>
                       <p className="text-sm text-gray-200">
-                        {new Date(
-                          p.start_time || p.created_time
-                        ).toLocaleString()}
+                        {new Date(dateStr).toLocaleString()}
                       </p>
                       <p className="text-sm text-gray-300 mt-2">{short}</p>
                       {p.full_picture && (
-                        <img
+                        <Image
                           src={p.full_picture}
-                          alt=""
-                          className="mt-2 max-h-40 object-cover rounded"
+                          alt={p.name || "Facebook image"}
+                          width={640}
+                          height={360}
+                          className="mt-2 object-cover rounded max-h-40"
+                          unoptimized
                         />
                       )}
                       <a
@@ -153,13 +160,12 @@ export default function FbImportModal({ onClose }: Props) {
                     </div>
                   </div>
 
-                  {/* Category select */}
                   <div className="ml-7">
                     <label className="text-xs uppercase tracking-wide block mb-1">
                       Category
                     </label>
                     <select
-                      value={sel?.category || ""}
+                      value={sel.category}
                       onChange={(e) => setCat(p.id, e.target.value)}
                       className="w-full bg-[#003554] border border-white/20 rounded px-2 py-1 text-sm"
                     >

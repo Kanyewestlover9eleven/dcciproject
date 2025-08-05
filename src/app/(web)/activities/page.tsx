@@ -2,6 +2,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 
 type Activity = {
   id: number;
@@ -29,7 +30,7 @@ function Section({ title, items }: { title: string; items: Activity[] }) {
           >
             {act.imageUrl && (
               <div className="w-full h-48 overflow-hidden">
-                <img src={act.imageUrl} alt={act.title} className="object-cover w-full h-full" />
+                <Image src={act.imageUrl} alt={act.title} className="object-cover w-full h-full" />
               </div>
             )}
             <div className="p-4 flex-1 flex flex-col">

@@ -8,8 +8,6 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useActivities } from "@/features/activities/hooks/useActivities";
 import { useDeleteActivity } from "@/features/activities/hooks/useDeleteActivity";
-import AddActivityForm from "@/features/activities/components/AddActivityForm";
-import EditActivityForm from "@/features/activities/components/EditActivityForm";
 import FbImportModal from "@/features/activities/components/FbImportModal";
 
 // helper to map enum -> label
@@ -29,8 +27,8 @@ export default function ActivitiesDashboard() {
   const { data: activities = [], isLoading, error } = useActivities();
   const del = useDeleteActivity();
 
-  const [adding, setAdding] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [ setAdding] = useState(false);
+  const [ setEditingId] = useState<number | null>(null);
   const [importOpen, setImportOpen] = useState(false);
 
   const columns: GridColDef[] = [
@@ -121,46 +119,6 @@ export default function ActivitiesDashboard() {
         </Paper>
       </div>
 
-      {/* Add Modal */}
-      {adding && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-[#003554] p-6 rounded-lg max-w-md w-full relative">
-            <button
-              onClick={() => setAdding(false)}
-              className="absolute top-2 right-2 text-white"
-            >
-              ✕
-            </button>
-            <AddActivityForm
-              onSuccess={() => {
-                setAdding(false);
-                qc.invalidateQueries({ queryKey: ["activities"] });
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {editingId != null && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-[#003554] p-6 rounded-lg max-w-md w-full relative">
-            <button
-              onClick={() => setEditingId(null)}
-              className="absolute top-2 right-2 text-white"
-            >
-              ✕
-            </button>
-            <EditActivityForm
-              activity={activities.find((a) => a.id === editingId)!}
-              onSuccess={() => {
-                setEditingId(null);
-                qc.invalidateQueries({ queryKey: ["activities"] });
-              }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* FB Import Modal */}
       {importOpen && (

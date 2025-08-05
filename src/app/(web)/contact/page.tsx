@@ -102,14 +102,16 @@ export default function ContactPage() {
   const handleRegChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     if (name.startsWith("licenses.")) {
       const key = name.split(".")[1] as keyof RegistrationData["licenses"];
       setReg((r) => ({
         ...r,
         licenses: {
           ...r.licenses,
-          [key]: type === "checkbox" ? checked : value,
+          [key]: type === "checkbox"
+            ? (e.target as HTMLInputElement).checked
+            : value,
         },
       }));
     } else {
@@ -191,10 +193,18 @@ export default function ContactPage() {
       alert("Registration successful! Thank you.");
       setReg(initialReg);
       setRegOpen(false);
-    } catch (err: any) {
-      console.error(err);
-      alert("Error: " + err.message);
     }
+    catch (error: unknown) {
+    const msg =
+      error instanceof Error           // normal JS error
+        ? error.message
+        : typeof error === 'string'    // something threw a string
+        ? error
+        : (error as { message?: string }).message ?? // API error object
+          'Registration failed.';
+
+    alert(msg);
+  }
   };
 
   const submitInquiry = (e: React.FormEvent) => {

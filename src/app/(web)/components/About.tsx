@@ -50,9 +50,9 @@ export default function About() {
           </div> */}
           <h4 className="text-xl font-semibold mb-3">DCCI Vision</h4>
           <p className="text-gray-700 text-center">
-            "To empower and elevate the Dayak community as a driving force in 
-            realizing the goals of PCDS 2030, with a focused commitment to strengthening Bumiputera 
-            participation in the commercial and industrial sectors."
+            To empower and elevate the Dayak community as a driving force in 
+            realizing the goals of PCDS 2030 with a focused commitment to strengthening Bumiputera 
+            participation in the commercial and industrial sectors.
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export default function About() {
         <div>
           <dt className="text-lg font-semibold">Investment and Resource Management</dt>
           <dd className="mt-2 text-gray-700">
-           Set up investment arms, acquire and develop properties, and manage financial resources such as shares, stocks, and bonds to benefit members and support the Chamber's sustainability.
+           Set up investment arms, acquire and develop properties, and manage financial resources such as shares, stocks, and bonds to benefit members and support the Chamber sustainability.
           </dd>
         </div>
       </dl>

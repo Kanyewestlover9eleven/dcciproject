@@ -88,8 +88,7 @@ const EditContractorForm: React.FC<EditContractorFormProps> = ({
       paidUpCapital: contractor.paidUpCapital || "",
       dayakEquity: contractor.dayakEquity?.toString() || "",
       contactPersonName: contractor.contactPersonName || "",
-      contactPersonDesignation:
-        contractor.contactPersonDesignation || "",
+      contactPersonDesignation: contractor.contactPersonDesignation || "",
       contactPersonPhone: contractor.contactPersonPhone || "",
       status: contractor.status,
       directorsCsv: contractor.directors.map((d) => d.name).join(", "),
@@ -101,7 +100,9 @@ const EditContractorForm: React.FC<EditContractorFormProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (data: typeof form & { id: number }) => {
-      const payload: any = { ...data };
+      // ---------- NO MORE ANY ----------
+      const payload: Record<string, unknown> = { ...data };
+
       if (data.directorsCsv) {
         payload.directors = data.directorsCsv
           .split(",")
@@ -115,6 +116,7 @@ const EditContractorForm: React.FC<EditContractorFormProps> = ({
       if (data.dayakEquity) {
         payload.dayakEquity = parseFloat(data.dayakEquity);
       }
+
       return fetch(`/api/contractors/${data.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -143,6 +145,7 @@ const EditContractorForm: React.FC<EditContractorFormProps> = ({
       className="space-y-4"
     >
       <Stack spacing={2}>
+        {/* ───────────────────────────────────── fields (unchanged) */}
         <TextField
           label="Company Name"
           name="companyName"

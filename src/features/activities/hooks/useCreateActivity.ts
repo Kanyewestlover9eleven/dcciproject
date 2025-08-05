@@ -1,11 +1,11 @@
-// src/features/activities/hooks/useCreateActivity.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, ActivityCreateInput } from "../types";
 
 export function useCreateActivity() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data: ActivityCreateInput) =>
+
+  return useMutation<Activity, Error, ActivityCreateInput>({
+    mutationFn: (data) =>
       fetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

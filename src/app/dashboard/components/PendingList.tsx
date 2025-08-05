@@ -46,7 +46,7 @@ export function PendingList({
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => activateMutation.mutate(c.id)}
-                disabled={activateMutation.isLoading}
+                disabled={activateMutation.status === "pending"}
                 className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition disabled:opacity-50"
               >
                 <Check className="w-4 h-4" />

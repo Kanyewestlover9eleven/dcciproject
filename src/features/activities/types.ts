@@ -15,3 +15,19 @@ export interface Activity {
   fbPostId?: string | null;
   published: boolean;
 }
+
+/**
+ * Data sent to POST /api/activities
+ * `category` and `source` are now optional to match Prisma defaults.
+ */
+export interface ActivityCreateInput {
+  title: string;
+  date: string;
+  description: string;
+  imageUrl?: string;
+  registerUrl?: string;
+  category?: ActivityCategory;
+  source?: ActivitySource;
+  fbPostId?: string;
+  published?: boolean;
+}

@@ -1,8 +1,18 @@
-// app/api/contractors/route.ts
+// src/app/api/contractors/route.ts
 import { NextResponse } from "next/server";
 import { PrismaClient, LicenseType } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+/**
+ * One licence item coming from the frontend.
+ * (If you prefer, replace this with `Prisma.LicenseCreateWithoutContractorInput`)
+ */
+interface LicenceInput {
+  type: keyof typeof LicenseType;   // "CIDB" | "UPKJ" | "UPK" | "FFO"
+  gradeOrClass: string | null;
+  subHeads: string | null;
+}
 
 export async function GET() {
   const contractors = await prisma.contractor.findMany({
@@ -13,13 +23,14 @@ export async function GET() {
     },
     orderBy: { createdAt: "desc" },
   });
+
   return NextResponse.json(contractors);
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
 
-  // Basic server-side validation (you can replace with Zod)
+  // ─── minimal validation ───
   if (!body.companyName || !body.email) {
     return NextResponse.json(
       { error: "companyName and email are required" },
@@ -27,11 +38,17 @@ export async function POST(request: Request) {
     );
   }
 
+  // ─── normalise incoming arrays ───
+  const directors   = Array.isArray(body.directors)          ? (body.directors as string[])       : [];
+  const licences    = Array.isArray(body.licenses)           ? (body.licenses  as LicenceInput[]) : [];
+  const otherRegs   = Array.isArray(body.otherRegistrations) ? (body.otherRegistrations as string[]): [];
+
   const contractor = await prisma.contractor.create({
     data: {
-      companyName:            body.companyName,
-      companyNumber:          body.companyNumber || undefined,
-      registrationDate:       body.registrationDate ? new Date(body.registrationDate) : undefined,
+      // scalar fields
+      companyName:      body.companyName,
+      companyNumber:    body.companyNumber || undefined,
+      registrationDate: body.registrationDate ? new Date(body.registrationDate) : undefined,
 
       registeredAddress:     body.registeredAddress,
       correspondenceAddress: body.correspondenceAddress,
@@ -42,30 +59,28 @@ export async function POST(request: Request) {
 
       authorisedCapital: body.authorisedCapital,
       paidUpCapital:     body.paidUpCapital,
-      dayakEquity:       body.dayakEquity ? parseFloat(body.dayakEquity) : undefined,
+      dayakEquity:
+        body.dayakEquity !== undefined && body.dayakEquity !== ""
+          ? parseFloat(body.dayakEquity)
+          : undefined,
 
       contactPersonName:        body.contactPersonName,
       contactPersonDesignation: body.contactPersonDesignation,
       contactPersonPhone:       body.contactPersonPhone,
 
+      // nested creates
       directors: {
-        create: Array.isArray(body.directors)
-          ? body.directors.map((name: string) => ({ name }))
-          : [],
+        create: directors.map((name) => ({ name })),
       },
       licenses: {
-        create: Array.isArray(body.licenses)
-          ? body.licenses.map((l: ) => ({
-              type:        LicenseType[l.type as keyof typeof LicenseType],
-              gradeOrClass: l.gradeOrClass,
-              subHeads:     l.subHeads,
-            }))
-          : [],
+        create: licences.map(({ type, gradeOrClass, subHeads }) => ({
+          type:        LicenseType[type],  // convert string -> enum
+          gradeOrClass,
+          subHeads,
+        })),
       },
       otherRegs: {
-        create: Array.isArray(body.otherRegistrations)
-          ? body.otherRegistrations.map((desc: string) => ({ description: desc }))
-          : [],
+        create: otherRegs.map((description) => ({ description })),
       },
     },
     include: { directors: true, licenses: true, otherRegs: true },

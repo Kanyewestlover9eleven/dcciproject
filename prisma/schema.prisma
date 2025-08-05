@@ -75,6 +75,10 @@ model Activity {
   description  String
   imageUrl     String?
   registerUrl  String?
+  category     ActivityCategory @default(OTHER)
+  source       ActivitySource   @default(MANUAL)
+  fbPostId     String?          @unique
+  published    Boolean          @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -90,20 +94,3 @@ enum ActivitySource {
   FACEBOOK
 }
 
-model Activity {
-  id           Int              @id @default(autoincrement())
-  title        String
-  date         DateTime
-  description  String
-  imageUrl     String?
-  registerUrl  String?
-
-  // NEW
-  category     ActivityCategory @default(OTHER)
-  source       ActivitySource   @default(MANUAL)
-  fbPostId     String?          @unique
-  published    Boolean          @default(true)
-
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-}

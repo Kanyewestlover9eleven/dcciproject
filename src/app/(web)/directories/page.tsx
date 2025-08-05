@@ -33,7 +33,7 @@ export default function DirectoriesPage() {
   const [search, setSearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
-  const [sortKey, setSortKey] = useState<"name" | "companyName" | "location">("name");
+  const [sortKey] = useState<"name" | "companyName" | "location">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 

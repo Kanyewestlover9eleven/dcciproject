@@ -31,15 +31,6 @@ const darkTheme = createTheme({
     text:       { primary: "#fff",    secondary: "#ccc" },
   },
   components: {
-    MuiDataGrid: {
-      styleOverrides: {
-        root:             { border: "none", color: "#fff", backgroundColor: "#003554" },
-        columnHeaders:    { backgroundColor: "#005a75", color: "#fff" },
-        columnSeparator:  { display: "none" },
-        cell:             { borderBottom: "1px solid #004d66" },
-        footerContainer:  { borderTop: "1px solid #004d66", backgroundColor: "#003554" },
-      },
-    },
     MuiPaper: {
       styleOverrides: {
         root: { backgroundColor: "#004d66" },
