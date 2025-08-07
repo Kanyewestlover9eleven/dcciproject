@@ -1,9 +1,12 @@
-// src/app/dashboard/activities/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import { Typography, Button, Paper } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+} from "@mui/x-data-grid";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useActivities } from "@/features/activities/hooks/useActivities";
@@ -27,8 +30,7 @@ export default function ActivitiesDashboard() {
   const { data: activities = [], isLoading, error } = useActivities();
   const del = useDeleteActivity();
 
-  const [ setAdding] = useState(false);
-  const [ setEditingId] = useState<number | null>(null);
+  // only keep the import-from-FB state
   const [importOpen, setImportOpen] = useState(false);
 
   const columns: GridColDef[] = [
@@ -38,19 +40,19 @@ export default function ActivitiesDashboard() {
       headerName: "Date",
       width: 130,
       renderCell: (p: GridRenderCellParams) =>
-        p.row?.date ? new Date(p.row.date).toLocaleDateString() : "-",
+        p.row.date ? new Date(p.row.date).toLocaleDateString() : "-",
     },
     {
       field: "category",
       headerName: "Category",
       width: 190,
-      renderCell: ({ row }) => categoryLabel(row?.category),
+      renderCell: ({ row }) => categoryLabel(row.category),
     },
     {
       field: "source",
       headerName: "Src",
       width: 80,
-      renderCell: ({ row }) => (row?.source === "FACEBOOK" ? "FB" : "Manual"),
+      renderCell: ({ row }) => (row.source === "FACEBOOK" ? "FB" : "Manual"),
     },
     {
       field: "description",
@@ -64,9 +66,6 @@ export default function ActivitiesDashboard() {
       width: 180,
       renderCell: (p) => (
         <>
-          <Button size="small" onClick={() => setEditingId(p.row.id)}>
-            Edit
-          </Button>
           <Button
             size="small"
             color="error"
@@ -92,21 +91,16 @@ export default function ActivitiesDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <Typography variant="h4">Manage Activities</Typography>
-        <div className="flex gap-2">
-          <Button variant="contained" onClick={() => setAdding(true)}>
-            + New Activity
-          </Button>
-          <Button variant="contained" onClick={() => setImportOpen(true)}>
-            Import from Facebook
-          </Button>
-        </div>
+        <Button variant="contained" onClick={() => setImportOpen(true)}>
+          Import from Facebook
+        </Button>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <Paper sx={{ height: 600, width: "100%", p: 2 }}>
           <DataGrid
-            rows={activities ?? []}
+            rows={activities}
             columns={columns}
             getRowId={(r) => r.id}
             pagination
@@ -119,8 +113,7 @@ export default function ActivitiesDashboard() {
         </Paper>
       </div>
 
-
-      {/* FB Import Modal */}
+      {/* Facebook Import Modal */}
       {importOpen && (
         <FbImportModal
           onClose={() => {

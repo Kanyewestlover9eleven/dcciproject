@@ -13,6 +13,6 @@ export function useUpdateActivity() {
       if (!res.ok) throw new Error("Failed to update");
       return res.json();
     },
-    onSuccess: () => qc.invalidateQueries(["activities"]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
   });
 }

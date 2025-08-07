@@ -14,6 +14,7 @@ import { useContractors } from "./hooks/useContractors";
 
 export default function ContractorsPage() {
   const qc = useQueryClient();
+  
 
   // 1) fetch
   const { data: contractors, isLoading, error } = useContractors();
@@ -166,7 +167,7 @@ export default function ContractorsPage() {
             <button onClick={() => setAddOpen(false)} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
               ✕
             </button>
-            <AddContractorForm onSuccess={() => { setAddOpen(false); qc.invalidateQueries(["contractors"]); }} />
+            <AddContractorForm onSuccess={() => { setAddOpen(false); qc.invalidateQueries({ queryKey: ["contractors"] }); }} />
           </div>
         </div>
       )}
@@ -178,10 +179,14 @@ export default function ContractorsPage() {
             <button onClick={() => setImportOpen(false)} className="absolute top-3 right-3 text-white hover:text-gray-700">
               ✕
             </button>
-            <ImportExcel onSuccess={() => { setImportOpen(false); qc.invalidateQueries(["contractors"]); }} />
+            <ImportExcel onSuccess={() => { 
+              setImportOpen(false); 
+              qc.invalidateQueries({ queryKey: ["contractors"] }); 
+            }} />
           </div>
         </div>
       )}
+
 
       {/* ─── Edit Modal ─── */}
       {editing && (
@@ -194,7 +199,7 @@ export default function ContractorsPage() {
               contractor={editing}
               onSuccess={() => {
                 setEditing(null);
-                qc.invalidateQueries(["contractors"]);
+                qc.invalidateQueries({ queryKey: ["contractors"] });
               }}
             />
           </div>

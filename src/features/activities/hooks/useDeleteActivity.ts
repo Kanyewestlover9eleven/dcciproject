@@ -7,6 +7,6 @@ export function useDeleteActivity() {
       const res = await fetch(`/api/activities/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
     },
-    onSuccess: () => qc.invalidateQueries(["activities"]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
   });
 }

@@ -3,7 +3,12 @@
 
 import { useState } from "react";
 
-export default function AddContractorForm() {
+// Define the props type
+interface AddContractorFormProps {
+  onSuccess?: () => void;
+}
+
+export default function AddContractorForm({ onSuccess }: AddContractorFormProps) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -26,6 +31,9 @@ export default function AddContractorForm() {
     if (res.ok) {
       alert("Contractor added!");
       setForm({ name: "", email: "", phone: "", address: "", category: "", location: "" });
+
+      // Call onSuccess if provided
+      if (onSuccess) onSuccess();
     } else {
       alert("Failed to add contractor");
     }
@@ -34,14 +42,16 @@ export default function AddContractorForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-[#003554] p-6 rounded-xl shadow">
       <h2 className="text-xl font-semibold">Add Contractor</h2>
-      {(["name","email","phone","address","category","location"] as const).map((field) => (
+      {(["name", "email", "phone", "address", "category", "location"] as const).map((field) => (
         <div key={field}>
-          <label className="block text-sm font-medium">{field.charAt(0).toUpperCase()+field.slice(1)}</label>
+          <label className="block text-sm font-medium">
+            {field.charAt(0).toUpperCase() + field.slice(1)}
+          </label>
           <input
             name={field}
             value={form[field]}
             onChange={handleChange}
-            required={field==="name"||field==="email"}
+            required={field === "name" || field === "email"}
             className="w-full border rounded px-3 py-2"
           />
         </div>

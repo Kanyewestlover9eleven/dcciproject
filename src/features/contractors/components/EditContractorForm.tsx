@@ -294,7 +294,7 @@ const EditContractorForm: React.FC<EditContractorFormProps> = ({
         <Button
           type="submit"
           variant="contained"
-          disabled={mutation.isLoading}
+          disabled={mutation.isPending}
         >
           Save Changes
         </Button>

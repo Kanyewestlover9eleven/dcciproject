@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ActivityCreateInput } from "../types";
 import { useCreateActivity } from "../hooks/useCreateActivity";
+import { ActivityCategory } from "@prisma/client";
 
 type FbPost = {
   id: string;
@@ -38,7 +39,7 @@ export default function FbImportModal({ onClose }: Props) {
   });
 
   const [selected, setSelected] = useState<
-    Record<string, { checked: boolean; category: string }>
+    Record<string, { checked: boolean; category: ActivityCategory }>
   >({});
 
   const toggle = (id: string) =>
@@ -47,7 +48,7 @@ export default function FbImportModal({ onClose }: Props) {
       [id]: { checked: !(s[id]?.checked), category: s[id]?.category || "" },
     }));
 
-  const setCat = (id: string, category: string) =>
+  const setCat = (id: string, category: ActivityCategory) =>
     setSelected((s) => ({
       ...s,
       [id]: { checked: true, category },
@@ -136,7 +137,7 @@ export default function FbImportModal({ onClose }: Props) {
                         {(p.name || p.message?.split("\n")[0] || "Facebook Post").slice(0, 100)}
                       </p>
                       <p className="text-sm text-gray-200">
-                        {new Date(dateStr).toLocaleString()}
+                        {new Date(p.start_time || p.created_time).toLocaleString()}
                       </p>
                       <p className="text-sm text-gray-300 mt-2">{short}</p>
                       {p.full_picture && (
@@ -166,7 +167,7 @@ export default function FbImportModal({ onClose }: Props) {
                     </label>
                     <select
                       value={sel.category}
-                      onChange={(e) => setCat(p.id, e.target.value)}
+                      onChange={(e) => setCat(p.id, e.target.value as ActivityCategory)}
                       className="w-full bg-[#003554] border border-white/20 rounded px-2 py-1 text-sm"
                     >
                       <option value="">-- none --</option>
@@ -192,10 +193,10 @@ export default function FbImportModal({ onClose }: Props) {
           </button>
           <button
             onClick={importSelected}
-            disabled={create.isLoading}
+            disabled={create.isPending}
             className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
-            {create.isLoading ? "Importing…" : "Import Selected"}
+            {create.isPending ? "Importing…" : "Import Selected"}
           </button>
         </div>
       </div>
