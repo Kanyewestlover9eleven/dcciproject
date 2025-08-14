@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import ContractorsPage from "@/features/contractors/page";
+import ContractorsPage from "@/app/features/contractors/page";
 
 export default function DashboardContractorsPage() {
   return <ContractorsPage />;

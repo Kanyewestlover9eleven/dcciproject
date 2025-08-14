@@ -9,88 +9,112 @@ datasource db {
 
 // prisma/schema.prisma
 
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  DECEASED
+}
+
 model Contractor {
-  id                 Int        @id @default(autoincrement())
-  companyName        String
-  companyNumber      String?
-  registrationDate   DateTime?
+  id             Int      @id @default(autoincrement())
+  name           String?
+  gender         String?
+  age            Int?            // ← must be here
+  nationalId     String?
+  membershipDate DateTime?
+  companyLicense String?
+  addressEmail   String?
+  contactFax     String?
+  region         String?
+  coreBusiness   String?
+  industryType   String?
+  status         MemberStatus @default(ACTIVE)
+  registrations  Registration[]  // one contractor, many registrations
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Audience {
+  id        Int      @id @default(autoincrement())
+  name      String
+  filters   Json     // { status?:string[], gender?:string[], region?:string[], industryType?:string[], ageMin?:number, ageMax?:number }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Template {
+  id        Int      @id @default(autoincrement())
+  name      String
+  subject   String
+  emailBody String
+  waBody    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlastJob {
+  id             Int         @id @default(autoincrement())
+  audienceId     Int?
+  templateId     Int?
+  filters        Json?       // snapshot used for this job
+  subject        String?
+  emailBody      String?
+  waBody         String?
+  channelEmail   Boolean     @default(false)
+  channelWhatsApp Boolean    @default(false)
+  total          Int         @default(0)
+  status         BlastStatus @default(QUEUED)
+  createdAt      DateTime    @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+
+}
+
+enum BlastStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Registration {
+  id           Int                 @id @default(autoincrement())
+  // copied from contact form (store raw values)
+  companyName  String
+  companyNumber String?
+  registrationDate DateTime?
 
   registeredAddress     String?
   correspondenceAddress String?
   website               String?
-  email                 String    @unique
+  email                 String?
   phone                 String?
   fax                   String?
 
   authorisedCapital String?
   paidUpCapital     String?
-  dayakEquity       Float?
-
-  directors  Director[]
-  licenses   License[]
-  otherRegs  OtherRegistration[]
+  dayakEquity       String?
 
   contactPersonName        String?
   contactPersonDesignation String?
   contactPersonPhone       String?
 
-  status     String    @default("pending")
-  createdAt  DateTime  @default(now())
-}
+  // keep raw structures as JSON
+  directors         Json?     // array of strings
+  licenses          Json?     // the licenses object
+  otherRegistrations Json?    // array of strings
 
-model Director {
-  id           Int        @id @default(autoincrement())
-  name         String
-  contractor   Contractor @relation(fields: [contractorId], references: [id])
-  contractorId Int
-}
+  status        RegistrationStatus @default(PENDING)
+  contractorId  Int?
+  contractor    Contractor?        @relation(fields: [contractorId], references: [id])
 
-model License {
-  id           Int        @id @default(autoincrement())
-  type         LicenseType
-  gradeOrClass String?
-  subHeads     String?
-  contractor   Contractor @relation(fields: [contractorId], references: [id])
-  contractorId Int
-}
-
-model OtherRegistration {
-  id           Int        @id @default(autoincrement())
-  description  String
-  contractor   Contractor @relation(fields: [contractorId], references: [id])
-  contractorId Int
-}
-
-enum LicenseType {
-  CIDB
-  UPKJ
-  UPK
-  FFO
-}
-
-model Activity {
-  id           Int      @id @default(autoincrement())
-  title        String
-  date         DateTime
-  description  String
-  imageUrl     String?
-  registerUrl  String?
-  category     ActivityCategory @default(OTHER)
-  source       ActivitySource   @default(MANUAL)
-  fbPostId     String?          @unique
-  published    Boolean          @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-enum ActivityCategory {
-  CAPACITY_BUILDING
-  BUSINESS_TALK
-  OTHER
-}
-
-enum ActivitySource {
-  MANUAL
-  FACEBOOK
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 

@@ -22,9 +22,7 @@ export function LicenseChart({
             outerRadius={80}
             labelLine={false}
             label={({ index, percent }) =>
-              typeof index === "number"
-                ? `${data[index].type}: ${(percent! * 100).toFixed(0)}%`
-                : ""
+              `${data[index].type}: ${(percent! * 100).toFixed(0)}%`
             }
           >
             {data.map((_, i) => (

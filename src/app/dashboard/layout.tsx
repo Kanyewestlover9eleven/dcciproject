@@ -18,9 +18,9 @@ const queryClient = new QueryClient();
 const navItems = [
   { label: "Home",       href: "/dashboard",          icon: Home },
   { label: "Members",    href: "/dashboard/contractors", icon: Users },
-  { label: "Activities", href: "/dashboard/activities", icon: Activity },
+  { label: "Registrations", href: "/dashboard/registrations", icon: Activity },
   { label: "Reports",    href: "/dashboard/reports",    icon: FileText },
-  { label: "Support",    href: "/dashboard/support",    icon: Mail },
+  { label: "Blast",      href: "/dashboard/blast",      icon: Mail },
 ];
 
 const darkTheme = createTheme({
@@ -79,7 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </Link>
 
                       {/* calendar now renders _after_ the Support link */}
-                      {href === "/dashboard/support" && (
+                      {href === "/dashboard/blast" && (
                         <div className="mt-4 px-2 w-full max-h-[240px] overflow-auto">
                           <DateCalendar
                             showDaysOutsideCurrentMonth
