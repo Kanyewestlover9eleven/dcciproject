@@ -30,19 +30,17 @@ export default function ContractorsPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedQ(q.trim()), 500); // slightly longer debounce
+    const id = setTimeout(() => setDebouncedQ(q.trim()), 500);
     return () => clearTimeout(id);
   }, [q]);
 
-  // keep focus on the input even when grid updates/refetches
   useEffect(() => {
     if (inputRef.current && document.activeElement !== inputRef.current) {
       inputRef.current.focus();
-      // put caret at end
       const len = inputRef.current.value.length;
       inputRef.current.setSelectionRange(len, len);
     }
-  }, [debouncedQ]); // refocus when search actually triggers
+  }, [debouncedQ]);
 
   // ── Data ──
   const { data: contractors, isLoading, error } = useContractors(debouncedQ);
@@ -52,7 +50,7 @@ export default function ContractorsPage() {
   const [isImportOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Contractor | null>(null);
 
-  // ── Columns ──
+  // ── Columns (unchanged logic) ──
   const columns: GridColDef<Contractor>[] = [
     { field: "name", headerName: "Name", flex: 2, minWidth: 180 },
     { field: "gender", headerName: "Gender", width: 100 },
@@ -106,7 +104,15 @@ export default function ContractorsPage() {
     <section className="min-w-0 space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Typography variant="h4">Members</Typography>
+        <div>
+          <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 0.2 }}>
+            Members
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            Manage member records, imports and edits.
+          </Typography>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3">
           {/* Search box */}
           <TextField
@@ -114,7 +120,6 @@ export default function ContractorsPage() {
             placeholder="Search name, NRIC, region, industry…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            // prevent DataGrid/global handlers from stealing focus
             onKeyDown={(e) => e.stopPropagation()}
             onKeyUp={(e) => e.stopPropagation()}
             onKeyPress={(e) => e.stopPropagation()}
@@ -123,7 +128,7 @@ export default function ContractorsPage() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search className="w-4 h-4 text-gray-500" />
+                  <Search className="w-4 h-4" />
                 </InputAdornment>
               ),
               endAdornment: q ? (
@@ -134,13 +139,32 @@ export default function ContractorsPage() {
                 </InputAdornment>
               ) : null,
             }}
-            sx={{ minWidth: 300, bgcolor: "transparent", borderRadius: 1 }}
+            sx={{
+              minWidth: 320,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: "rgba(255,255,255,0.04)",
+                "& fieldset": { borderColor: "rgba(255,255,255,0.12)" },
+                "&:hover fieldset": { borderColor: "rgba(255,255,255,0.24)" },
+                "&.Mui-focused fieldset": { borderColor: "primary.main" },
+              },
+            }}
           />
 
-          <Button variant="contained" color="success" onClick={() => setImportOpen(true)}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => setImportOpen(true)}
+            sx={{ borderRadius: 2, textTransform: "none", px: 2.5 }}
+          >
             + Import Excel
           </Button>
-          <Button variant="contained" color="primary" onClick={() => setAddOpen(true)}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setAddOpen(true)}
+            sx={{ borderRadius: 2, textTransform: "none", px: 2.5 }}
+          >
             + Add Member
           </Button>
         </div>
@@ -148,7 +172,20 @@ export default function ContractorsPage() {
 
       {/* Table */}
       <div className="overflow-x-auto min-w-0">
-        <Paper className="min-w-full" elevation={2} sx={{ height: 650, width: "100%", p: 2, borderRadius: 2 }}>
+        <Paper
+          className="min-w-full"
+          elevation={2}
+          sx={{
+            height: 650,
+            width: "100%",
+            p: 1.5,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "rgba(255,255,255,0.08)",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%)",
+          }}
+        >
           <DataGrid<Contractor>
             rows={contractors || []}
             columns={columns}
@@ -157,8 +194,32 @@ export default function ContractorsPage() {
             pageSizeOptions={[25, 50, 100]}
             initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
             disableRowSelectionOnClick
-            // optional: avoid focus churn when rows update
-            // disableVirtualization   // uncomment if you still see flicker (slower on very large lists)
+            rowHeight={44}
+            columnHeaderHeight={48}
+            getRowClassName={(p) =>
+              p.indexRelativeToCurrentPage % 2 === 0 ? "datagrid--even" : "datagrid--odd"
+            }
+            sx={{
+              "& .MuiDataGrid-columnHeaders": {
+                bgcolor: "rgba(255,255,255,0.06)",
+                backdropFilter: "blur(4px)",
+                borderBottom: "1px solid rgba(255,255,255,0.1)",
+                ".MuiDataGrid-columnHeaderTitle": { fontWeight: 600, letterSpacing: 0.2 },
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              },
+              "& .datagrid--even": { bgcolor: "rgba(255,255,255,0.02)" },
+              "& .datagrid--odd": { bgcolor: "transparent" },
+              "& .MuiDataGrid-row:hover": {
+                bgcolor: "rgba(0,0,0,0.1)",
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "1px solid rgba(255,255,255,0.08)",
+                bgcolor: "rgba(255,255,255,0.03)",
+              },
+              "& .MuiButton-text": { textTransform: "none" },
+            }}
           />
         </Paper>
       </div>

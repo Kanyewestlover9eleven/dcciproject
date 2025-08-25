@@ -154,6 +154,11 @@ export default function ContactPage() {
   const [inquiry, setInquiry] = useState<InquiryData>({ name: "", email: "", message: "" });
   const [isRegOpen, setRegOpen] = useState(false);
 
+  // receipt upload (PDF)
+  const [receiptUrl, setReceiptUrl] = useState<string>("");
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [receiptErr, setReceiptErr] = useState<string | null>(null);
+
   // short setters
   const setField = <K extends keyof RegistrationData>(k: K, v: RegistrationData[K]) => setReg((r) => ({ ...r, [k]: v }));
   const setA = <K extends keyof SectionA>(k: K, v: SectionA[K]) => setReg((r) => ({ ...r, sectionA: { ...r.sectionA, [k]: v } }));
@@ -172,7 +177,35 @@ export default function ContactPage() {
   const handleInquiryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setInquiry((i) => ({ ...i, [e.target.name]: e.target.value }));
 
-  /** Submit — keep DB the same. Persist full form under licenses.__fullForm */
+  // upload receipt PDF to /api/uploads/receipt, store public URL
+  async function handleReceiptPdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReceiptErr(null);
+    if (file.type !== "application/pdf") {
+      setReceiptErr("Only PDF allowed.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setReceiptErr("Max 10MB.");
+      return;
+    }
+    setUploadingReceipt(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/uploads/receipt", { method: "POST", body: fd });
+      if (!r.ok) throw new Error(await r.text());
+      const { url } = await r.json();
+      setReceiptUrl(url);
+    } catch (err: any) {
+      setReceiptErr(err?.message || "Upload failed");
+    } finally {
+      setUploadingReceipt(false);
+    }
+  }
+
+  /** Submit — keep DB the same. Persist full form under licenses.__fullForm, and stash receipt in otherRegistrations as a tagged line. */
   const submitRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reg.declarationAgreed) {
@@ -180,7 +213,6 @@ export default function ContactPage() {
       return;
     }
 
-    // derive DB-mapped fields
     const isOwner = reg.isBusinessOwner;
     const companyName =
       (isOwner ? reg.sectionB.orgName : reg.sectionC.orgName) || reg.sectionA.applicantName || "Applicant";
@@ -190,7 +222,6 @@ export default function ContactPage() {
     const email = reg.sectionA.contactEmail || undefined;
     const phone = reg.sectionA.contactHP || reg.sectionA.contactOffice || undefined;
 
-    // licenses object (also used to hold the entire form)
     const licenses = {
       cidb: !!reg.sectionB.licenses.cidb,
       cidbGrade: reg.sectionB.licenses.cidbGrade || undefined,
@@ -198,14 +229,16 @@ export default function ContactPage() {
       mof: !!reg.sectionB.licenses.mof,
       ePerolehan: !!reg.sectionB.licenses.ePerolehan,
       other: reg.sectionB.licenses.other || undefined,
-      __fullForm: reg, // ← full complex form stored here
+      __fullForm: reg,
     };
 
+    const otherRegistrations: string[] = [];
+    if (receiptUrl) otherRegistrations.push(`RECEIPT:${receiptUrl}`);
+
     const payload = {
-      // existing Registration columns
       companyName,
       companyNumber,
-      registrationDate: undefined, // unknown in this form
+      registrationDate: undefined,
       registeredAddress,
       correspondenceAddress,
       website: undefined,
@@ -218,11 +251,9 @@ export default function ContactPage() {
       contactPersonName: reg.sectionA.applicantName || undefined,
       contactPersonDesignation: isOwner ? "Owner" : reg.sectionC.positionDept || undefined,
       contactPersonPhone: phone,
-
-      // JSON columns
-      directors: [], // not captured here
+      directors: [],
       licenses,
-      otherRegistrations: [], // not captured here
+      otherRegistrations,
     };
 
     try {
@@ -238,6 +269,7 @@ export default function ContactPage() {
       await res.json();
       alert("Registration submitted.");
       setReg(initialReg);
+      setReceiptUrl("");
       setRegOpen(false);
     } catch (error: any) {
       alert(error?.message || "Registration failed.");
@@ -559,6 +591,26 @@ export default function ContactPage() {
                   <label className="flex flex-col">Seconder Date
                     <input type="date" value={reg.sectionE.seconderDate} onChange={(e) => setE("seconderDate", e.target.value)} className="border rounded px-2 py-1" />
                   </label>
+                </div>
+              </fieldset>
+
+              {/* Payment receipt upload */}
+              <fieldset className="border p-4 rounded">
+                <legend className="font-semibold">Payment Receipt (PDF)</legend>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleReceiptPdf}
+                    className="border rounded px-2 py-1"
+                  />
+                  {uploadingReceipt && <p className="text-sm text-gray-600">Uploading…</p>}
+                  {receiptUrl && (
+                    <p className="text-sm text-green-700 break-all">
+                      Attached: <a href={receiptUrl} target="_blank" className="underline">receipt.pdf</a>
+                    </p>
+                  )}
+                  {receiptErr && <p className="text-sm text-red-600">{receiptErr}</p>}
                 </div>
               </fieldset>
 

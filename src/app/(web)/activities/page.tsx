@@ -1,89 +1,70 @@
-// src/app/activities/page.tsx
-"use client";
+// src/app/(web)/activities/page.tsx
+export const runtime = "nodejs";
+import Link from "next/link";
+import { listActivities } from "@/lib/activities";
 
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import Image from "next/image";
+export default async function ActivitiesPage() {
+  try {
+    const items = await listActivities();
 
-type Activity = {
-  id: number;
-  title: string;
-  date: string;
-  description: string;
-  imageUrl?: string;
-  registerUrl?: string;
-  category: "CAPACITY_BUILDING"|"BUSINESS_TALK"|"OTHER";
-  published: boolean;
-};
+    if (!items.length) {
+      return (
+        <div className="mx-auto max-w-6xl px-6 py-10">
+          <h1 className="text-3xl font-bold">Activities</h1>
+          <p className="mt-4 text-gray-600">No activities available.</p>
+        </div>
+      );
+    }
 
-const qc = new QueryClient();
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <h1 className="mb-6 text-3xl font-bold">Activities</h1>
 
-function Section({ title, items }: { title: string; items: Activity[] }) {
-  if (!items.length) return null;
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">{title}</h2>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((act) => (
-          <div
-            key={act.id}
-            className="flex flex-col border rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow"
-          >
-            {act.imageUrl && (
-              <div className="w-full h-48 overflow-hidden">
-                <Image src={act.imageUrl} alt={act.title} className="object-cover w-full h-full" />
-              </div>
-            )}
-            <div className="p-4 flex-1 flex flex-col">
-              <h3 className="text-lg font-semibold mb-1">{act.title}</h3>
-              <p className="text-sm text-gray-400 mb-2">
-                {new Date(act.date).toLocaleDateString()}
-              </p>
-              <p className="text-gray-700 mb-4 flex-1">{act.description}</p>
-              {act.registerUrl && (
-                <a
-                  href={act.registerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-auto inline-block text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                >
-                  More Info
-                </a>
+        <ul className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {items.map((it) => (
+            <li
+              key={it.slug}
+              className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+            >
+              {it.coverUrl && (
+                <div className="relative aspect-[4/3] w-full bg-gray-100">
+                  <img
+                    src={it.coverUrl}
+                    alt={it.title || "Activity cover"}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
               )}
-            </div>
-          </div>
-        ))}
+
+              <div className="p-5">
+                <h2 className="text-xl font-semibold text-gray-900">{it.title}</h2>
+                {it.date && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    {new Date(it.date).toLocaleDateString()}
+                  </p>
+                )}
+
+                <Link
+                  href={`/activities/${it.slug}`}
+                  className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Read more
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
-  );
-}
-
-function ActivitiesList() {
-  const { data = [], isLoading, error } = useQuery<Activity[]>({
-    queryKey: ["activities"],
-    queryFn: () => fetch("/api/activities?published=true").then(r => r.json()),
-  });
-
-  if (isLoading) return <p className="p-6">Loading activities…</p>;
-  if (error) return <p className="p-6 text-red-500">Error loading activities.</p>;
-
-  const capacity = data.filter(a => a.category === "CAPACITY_BUILDING");
-  const talks    = data.filter(a => a.category === "BUSINESS_TALK");
-  const other    = data.filter(a => a.category === "OTHER");
-
-  return (
-    <section className="p-6 space-y-10">
-      <h1 className="text-2xl font-bold">Upcoming Activities</h1>
-      <Section title="Capacity Building Programs" items={capacity} />
-      <Section title="Business Talk Series" items={talks} />
-      <Section title="Other Activities" items={other} />
-    </section>
-  );
-}
-
-export default function ActivitiesPage() {
-  return (
-    <QueryClientProvider client={qc}>
-      <ActivitiesList />
-    </QueryClientProvider>
-  );
+    );
+  } catch (e: any) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <h1 className="text-3xl font-bold">Activities</h1>
+        <pre className="mt-4 whitespace-pre-wrap rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Activities failed. {e?.message}
+        </pre>
+      </div>
+    );
+  }
 }

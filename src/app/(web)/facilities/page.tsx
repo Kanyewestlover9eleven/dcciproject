@@ -1,58 +1,64 @@
 // src/app/(web)/facilities/page.tsx
-"use client";
+export const runtime = "nodejs";
 
-import Image from "next/image";
+type Facility = {
+  id: number | string;
+  slug: string;
+  name: string;
+  description: string | null;
+  photo: string;
+  ctaLabel: string;
+  ctaUrl: string;
+};
 
-const facilities = [
-  {
-    title: "Meeting Room A",
-    desc: "Fits 500–800 pax, audio/visual suite included.",
-    img: "/theatre.png",
-    link: "/booking?room=A"
-  },
-  {
-    title: "Conference Hall B",
-    desc: "Up to 200 pax, stage + lighting.",
-    img: "/cluster.png",
-    link: "/booking?room=B"
-  },
-  {
-    title: "Conference Hall C",
-    desc: "Up to 200 pax, stage + lighting.",
-    img: "/conference.png",
-    link: "/booking?room=B"
-  },
-  // …
-];
+async function fetchFacilities(): Promise<Facility[]> {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const res = await fetch(`${base}/api/strapi/facilities`, { cache: "no-store" });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
-export default function FacilitiesPage() {
+export default async function FacilitiesPage() {
+  const items = await fetchFacilities();
+  if (!items?.length) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Facilities</h1>
+        <p className="text-gray-600">No facilities available.</p>
+      </div>
+    );
+  }
+
   return (
-    <section className="py-12 bg-gray-50">
-      <h1 className="text-3xl font-bold text-center mb-8">Our Facilities</h1>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 px-4">
-        {facilities.map((f) => (
-          <div key={f.title} className="bg-white rounded shadow overflow-hidden">
-            <div className="relative h-80 w-full">
-              <Image
-                src={f.img}
-                alt={f.title}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="p-4">
-              <h2 className="font-semibold mb-2">{f.title}</h2>
-              <p className="text-gray-600 mb-4">{f.desc}</p>
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Facilities</h1>
+      {/* 1 col on mobile, 2 on small screens, 3 on large */}
+      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((f) => (
+          <li
+            key={f.id}
+            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+          >
+            <img
+              src={f.photo}
+              alt={f.name}
+              className="h-48 w-full object-cover"
+            />
+            <div className="p-5">
+              <h2 className="text-lg font-semibold">{f.name}</h2>
+              {f.description && (
+                <p className="mt-2 text-sm text-gray-600">{f.description}</p>
+              )}
               <a
-                href={f.link}
-                className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                href={f.ctaUrl || "#"}
+                className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
-                Book Now
+                {f.ctaLabel || "Book Now"}
               </a>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
-    </section>
+      </ul>
+    </div>
   );
 }

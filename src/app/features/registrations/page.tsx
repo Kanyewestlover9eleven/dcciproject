@@ -53,6 +53,17 @@ const safeJson = (v: any) => {
   }
 };
 
+const extractReceiptUrl = (row: Registration): string => {
+  const arr = Array.isArray(row.otherRegistrations) ? row.otherRegistrations : [];
+  for (const it of arr) {
+    const s = typeof it === "string" ? it : "";
+    if (s.startsWith("RECEIPT:")) return s.slice(8).trim();
+    const m = s.match(/https?:\/\/\S+\.pdf\b|\/receipts\/[^\s)]+/i);
+    if (m) return m[0];
+  }
+  return "";
+};
+
 const normalize = (r: any): Registration => ({
   ...r,
   email: typeof r?.email === "string" ? r.email : "",
@@ -107,98 +118,160 @@ export default function RegistrationsFeaturePage() {
   });
 
   const columns: GridColDef<Registration>[] = [
-  { field: "companyName", headerName: "Company", flex: 2, minWidth: 200 },
+    { field: "companyName", headerName: "Company", flex: 2, minWidth: 200 },
 
-  {
-    field: "email",
-    headerName: "Email",
-    flex: 1,
-    minWidth: 180,
-    valueFormatter: ({ value }) => safeStr(value),
-    renderCell: ({ value }) => <span>{safeStr(value) || "—"}</span>,
-  },
+    {
+      field: "email",
+      headerName: "Email",
+      flex: 1,
+      minWidth: 180,
+      valueFormatter: ({ value }) => safeStr(value),
+      renderCell: ({ value }) => <span>{safeStr(value) || "—"}</span>,
+    },
 
-  {
-    field: "phone",
-    headerName: "Phone",
-    width: 140,
-    valueFormatter: ({ value }) => safeStr(value),
-    renderCell: ({ value }) => <span>{safeStr(value) || "—"}</span>,
-  },
+    {
+      field: "phone",
+      headerName: "Phone",
+      width: 140,
+      valueFormatter: ({ value }) => safeStr(value),
+      renderCell: ({ value }) => <span>{safeStr(value) || "—"}</span>,
+    },
 
-  {
-    field: "status",
-    headerName: "Status",
-    width: 130,
-    renderCell: (p) => (
-      <Chip
-        label={p.row.status}
-        color={
-          p.row.status === "PENDING"
-            ? "warning"
-            : p.row.status === "APPROVED"
-            ? "success"
-            : "default"
-        }
-      />
-    ),
-  },
+    {
+      field: "receipt",
+      headerName: "Receipt",
+      width: 130,
+      sortable: false,
+      filterable: false,
+      renderCell: (p) => {
+        const url = extractReceiptUrl(p.row);
+        return url ? (
+          <Button
+            size="small"
+            component="a"
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            sx={{ textTransform: "none" }}
+          >
+            View PDF
+          </Button>
+        ) : (
+          <span>—</span>
+        );
+      },
+    },
 
-  {
-    field: "createdAt",
-    headerName: "Submitted",
-    width: 180,
-    valueFormatter: ({ value }) => fmtDateTime(value),
-    renderCell: ({ value }) => <span>{fmtDateTime(value) || "—"}</span>,
-  },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 130,
+      renderCell: (p) => (
+        <Chip
+          label={p.row.status}
+          color={
+            p.row.status === "PENDING"
+              ? "warning"
+              : p.row.status === "APPROVED"
+              ? "success"
+              : "default"
+          }
+          variant="filled"
+          sx={{ fontWeight: 600 }}
+        />
+      ),
+    },
 
-  {
-    field: "actions",
-    headerName: "Actions",
-    width: 260,
-    renderCell: (p) => (
-      <div className="flex gap-6">
-        <Button
-          size="small"
-          component="a"
-          href={`/api/registrations/${p.row.id}/pdf`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          PDF
-        </Button>
-        {p.row.status === "PENDING" && (
-          <>
-            <Button
-              size="small"
-              color="success"
-              onClick={() => approve.mutate(p.row.id)}
-              disabled={approve.isPending}
-            >
-              {approve.isPending ? "Approving…" : "Approve"}
-            </Button>
-            <Button
-              size="small"
-              color="error"
-              onClick={() => reject.mutate(p.row.id)}
-              disabled={reject.isPending}
-            >
-              {reject.isPending ? "Rejecting…" : "Reject"}
-            </Button>
-          </>
-        )}
-      </div>
-    ),
-  },
-];
+    {
+      field: "createdAt",
+      headerName: "Submitted",
+      width: 180,
+      valueFormatter: ({ value }) => fmtDateTime(value),
+      renderCell: ({ value }) => <span>{fmtDateTime(value) || "—"}</span>,
+    },
 
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 260,
+      renderCell: (p) => (
+        <div className="flex gap-6">
+          <Button
+            size="small"
+            component="a"
+            href={`/api/registrations/${p.row.id}/pdf`}
+            target="_blank"
+            rel="noreferrer"
+            sx={{ textTransform: "none" }}
+          >
+            PDF
+          </Button>
+          {p.row.status === "PENDING" && (
+            <>
+              <Button
+                size="small"
+                color="success"
+                onClick={() => approve.mutate(p.row.id)}
+                disabled={approve.isPending}
+                sx={{ textTransform: "none" }}
+              >
+                {approve.isPending ? "Approving…" : "Approve"}
+              </Button>
+              <Button
+                size="small"
+                color="error"
+                onClick={() => reject.mutate(p.row.id)}
+                disabled={reject.isPending}
+                sx={{ textTransform: "none" }}
+              >
+                {reject.isPending ? "Rejecting…" : "Reject"}
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <Box className="space-y-6">
-      <Typography variant="h4">Registrations</Typography>
+      {/* Page header */}
+      <div>
+        <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 0.2 }}>
+          Registrations
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+          Review incoming applications, export PDFs, and approve or reject.
+        </Typography>
+      </div>
 
-      <Paper className="p-2">
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} textColor="primary" indicatorColor="primary">
+      {/* Tabs + Grid */}
+      <Paper
+        elevation={2}
+        sx={{
+          p: 0,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "rgba(255,255,255,0.08)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%)",
+        }}
+      >
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{
+            px: 1,
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: 2,
+              minHeight: 44,
+            },
+          }}
+        >
           <Tab label="Pending" value="PENDING" />
           <Tab label="Approved" value="APPROVED" />
           <Tab label="Rejected" value="REJECTED" />
@@ -211,16 +284,54 @@ export default function RegistrationsFeaturePage() {
             getRowId={(r) => r.id}
             loading={isLoading}
             pagination
+            density="comfortable"
             pageSizeOptions={[25, 50, 100]}
-            initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
+            initialState={{
+              pagination: { paginationModel: { page: 0, pageSize: 25 } },
+            }}
             disableRowSelectionOnClick
+            onRowDoubleClick={(p) => setSelected(p.row)}
+            rowHeight={44}
+            columnHeaderHeight={48}
+            getRowClassName={(p) =>
+              p.indexRelativeToCurrentPage % 2 === 0 ? "datagrid--even" : "datagrid--odd"
+            }
+            sx={{
+              "& .MuiDataGrid-columnHeaders": {
+                bgcolor: "rgba(255,255,255,0.06)",
+                backdropFilter: "blur(4px)",
+                borderBottom: "1px solid rgba(255,255,255,0.1)",
+                ".MuiDataGrid-columnHeaderTitle": { fontWeight: 600, letterSpacing: 0.2 },
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              },
+              "& .datagrid--even": { bgcolor: "rgba(255,255,255,0.02)" },
+              "& .datagrid--odd": { bgcolor: "transparent" },
+              "& .MuiDataGrid-row:hover": { bgcolor: "rgba(0,0,0,0.1)" },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "1px solid rgba(255,255,255,0.08)",
+                bgcolor: "rgba(255,255,255,0.03)",
+              },
+              "& .MuiButton-text": { textTransform: "none" },
+            }}
           />
         </div>
       </Paper>
 
+      {/* Details modal */}
       <Dialog open={!!selected} onClose={() => setSelected(null)} maxWidth="md" fullWidth>
-        <DialogTitle>Registration Details</DialogTitle>
-        <DialogContent dividers>
+        <DialogTitle sx={{ fontWeight: 700 }}>Registration Details</DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            "& pre": {
+              backgroundColor: "rgba(255,255,255,0.06)",
+              borderRadius: 1,
+              p: 1.5,
+            },
+          }}
+        >
           {selected && (
             <div className="space-y-2 text-sm">
               <div>
@@ -242,31 +353,33 @@ export default function RegistrationsFeaturePage() {
                 <b>Correspondence Address:</b> {safeStr(selected.correspondenceAddress)}
               </div>
               <div>
-                <b>Capital:</b> Auth {safeStr(selected.authorisedCapital)} • Paid {safeStr(selected.paidUpCapital)}
+                <b>Capital:</b> Auth {safeStr(selected.authorisedCapital)} • Paid{" "}
+                {safeStr(selected.paidUpCapital)}
               </div>
               <div>
-                <b>Contact Person:</b> {safeStr(selected.contactPersonName)} ({safeStr(selected.contactPersonDesignation)}) •{" "}
+                <b>Contact Person:</b> {safeStr(selected.contactPersonName)} (
+                {safeStr(selected.contactPersonDesignation)}) •{" "}
                 {safeStr(selected.contactPersonPhone)}
               </div>
 
               <div className="mt-3">
                 <b>Directors</b>
               </div>
-              <pre className="bg-gray-100 p-2 rounded overflow-auto">{safeJson(selected.directors)}</pre>
+              <pre className="overflow-auto">{safeJson(selected.directors)}</pre>
 
               <div className="mt-3">
                 <b>Licenses</b>
               </div>
-              <pre className="bg-gray-100 p-2 rounded overflow-auto">{safeJson(selected.licenses)}</pre>
+              <pre className="overflow-auto">{safeJson(selected.licenses)}</pre>
 
               <div className="mt-3">
                 <b>Other Registrations</b>
               </div>
-              <pre className="bg-gray-100 p-2 rounded overflow-auto">{safeJson(selected.otherRegistrations)}</pre>
+              <pre className="overflow-auto">{safeJson(selected.otherRegistrations)}</pre>
             </div>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, py: 2 }}>
           {selected?.status === "PENDING" && (
             <>
               <Button
@@ -277,6 +390,7 @@ export default function RegistrationsFeaturePage() {
                   }
                 }}
                 color="error"
+                sx={{ textTransform: "none" }}
               >
                 Reject
               </Button>
@@ -289,12 +403,15 @@ export default function RegistrationsFeaturePage() {
                 }}
                 variant="contained"
                 color="primary"
+                sx={{ textTransform: "none" }}
               >
                 Approve
               </Button>
             </>
           )}
-          <Button onClick={() => setSelected(null)}>Close</Button>
+          <Button onClick={() => setSelected(null)} sx={{ textTransform: "none" }}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
